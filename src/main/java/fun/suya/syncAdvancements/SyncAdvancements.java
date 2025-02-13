@@ -29,16 +29,24 @@ public final class SyncAdvancements extends JavaPlugin implements Listener {
         Player player = event.getPlayer();
         Advancement advancement = event.getAdvancement();
 
-        // 将完成的进度同步给其他玩家
-        syncAdvancementToAllPlayers(advancement, player);
+        // 检查玩家IP是否为127.x.x.x
+        if (!isLocalhost(player)) {
+            // 将完成的进度同步给其他玩家
+            syncAdvancementToAllPlayers(advancement, player);
+        }
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player joiningPlayer = event.getPlayer();
 
+        // 检查新加入玩家IP是否为127.x.x.x
+        if (isLocalhost(joiningPlayer)) {
+            return;
+        }
+
         for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-            if (!onlinePlayer.equals(joiningPlayer)) {
+            if (!onlinePlayer.equals(joiningPlayer) && !isLocalhost(onlinePlayer)) {
                 // 遍历进度
                 Iterator<Advancement> advancements = Bukkit.getServer().advancementIterator();
                 while (advancements.hasNext()) {
@@ -67,9 +75,8 @@ public final class SyncAdvancements extends JavaPlugin implements Listener {
     }
 
     private void syncAdvancementToAllPlayers(Advancement advancement, Player sourcePlayer) {
-
         for (Player targetPlayer : Bukkit.getOnlinePlayers()) {
-            if (!targetPlayer.equals(sourcePlayer) && !targetPlayer.getAdvancementProgress(advancement).isDone()) {
+            if (!targetPlayer.equals(sourcePlayer) && !targetPlayer.getAdvancementProgress(advancement).isDone() && !isLocalhost(targetPlayer)) {
                 // 如果目标玩家没有这个进度，授予他们
                 for (String criteria : advancement.getCriteria()) {
                     targetPlayer.getAdvancementProgress(advancement).awardCriteria(criteria);
@@ -80,6 +87,16 @@ public final class SyncAdvancements extends JavaPlugin implements Listener {
                     Bukkit.broadcastMessage("§b已将 §a" + sourcePlayer.getName() + " §b完成的进度 §a" + advancement.getKey().getKey() + " §b同步至 §a" + targetPlayer.getName());
                 }
             }
+        }
+    }
+
+    private boolean isLocalhost(Player player) {
+        try {
+            String ip = player.getAddress().getAddress().getHostAddress();
+            return ip.startsWith("127.");
+        } catch (NullPointerException e) {
+            Bukkit.broadcastMessage("§c无法判断玩家 §a" + player.getName() + " §c是否为假人！");
+            return false;
         }
     }
 }
