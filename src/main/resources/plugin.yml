@@ -1,0 +1,4 @@
+name: SyncAdvancements
+version: '1.0'
+main: fun.suya.syncAdvancements.SyncAdvancements
+api-version: '1.20'
