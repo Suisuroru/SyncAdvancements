@@ -70,13 +70,15 @@ public final class SyncAdvancements extends JavaPlugin implements Listener {
     private void CheckAdvancement(Player Player1, Player Player2, Advancement advancement) {
         if (Player1.getAdvancementProgress(advancement).isDone() &&
                 !Player2.getAdvancementProgress(advancement).isDone()) {
-            for (String criteria : advancement.getCriteria()) {
-                Player2.getAdvancementProgress(advancement).awardCriteria(criteria);
-            }
             if (advancement.getKey().getKey().startsWith("recipes/")) {
                 Bukkit.broadcastMessage("§b已将 §a" + Player1.getName() + " §b取得的配方 §a" + advancement.getKey().getKey() + " §b同步至 §a" + Player2.getName());
-            } else {
+            } else if (advancement.getKey().getKey().startsWith("adventure/")) {
                 Bukkit.broadcastMessage("§b已将 §a" + Player1.getName() + " §b完成的进度 §a" + advancement.getKey().getKey() + " §b同步至 §a" + Player2.getName());
+            } else {
+                return;
+            }
+            for (String criteria : advancement.getCriteria()) {
+                Player2.getAdvancementProgress(advancement).awardCriteria(criteria);
             }
         }
     }
@@ -84,14 +86,16 @@ public final class SyncAdvancements extends JavaPlugin implements Listener {
     private void syncAdvancementToAllPlayers(Advancement advancement, Player sourcePlayer) {
         for (Player targetPlayer : Bukkit.getOnlinePlayers()) {
             if (!targetPlayer.equals(sourcePlayer) && !targetPlayer.getAdvancementProgress(advancement).isDone() && !isLocalhost(targetPlayer)) {
+                if (advancement.getKey().getKey().startsWith("recipes/")) {
+                    Bukkit.broadcastMessage("§b已将 §a" + sourcePlayer.getName() + " §b取得的配方 §a" + advancement.getKey().getKey() + " §b同步至 §a" + targetPlayer.getName());
+                } else if (advancement.getKey().getKey().startsWith("adventure/")){
+                    Bukkit.broadcastMessage("§b已将 §a" + sourcePlayer.getName() + " §b完成的进度 §a" + advancement.getKey().getKey() + " §b同步至 §a" + targetPlayer.getName());
+                } else {
+                    return;
+                }
                 // 如果目标玩家没有这个进度，授予他们
                 for (String criteria : advancement.getCriteria()) {
                     targetPlayer.getAdvancementProgress(advancement).awardCriteria(criteria);
-                }
-                if (advancement.getKey().getKey().startsWith("recipes/")) {
-                    Bukkit.broadcastMessage("§b已将 §a" + sourcePlayer.getName() + " §b取得的配方 §a" + advancement.getKey().getKey() + " §b同步至 §a" + targetPlayer.getName());
-                } else {
-                    Bukkit.broadcastMessage("§b已将 §a" + sourcePlayer.getName() + " §b完成的进度 §a" + advancement.getKey().getKey() + " §b同步至 §a" + targetPlayer.getName());
                 }
             }
         }
