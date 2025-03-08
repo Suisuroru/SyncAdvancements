@@ -9,9 +9,13 @@ import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 public final class SyncAdvancements extends JavaPlugin implements Listener {
+
+    private final Set<Advancement> syncedAdvancements = new HashSet<>();
 
     @Override
     public void onEnable() {
@@ -30,9 +34,10 @@ public final class SyncAdvancements extends JavaPlugin implements Listener {
         Advancement advancement = event.getAdvancement();
 
         // 检查玩家IP是否为127.x.x.x
-        if (!isLocalhost(player)) {
+        if (!isLocalhost(player) && !syncedAdvancements.contains(advancement)) {
             // 将完成的进度同步给其他玩家
             syncAdvancementToAllPlayers(advancement, player);
+            syncedAdvancements.add(advancement); // 标记该进度已同步
         }
     }
 
@@ -44,6 +49,8 @@ public final class SyncAdvancements extends JavaPlugin implements Listener {
         if (isLocalhost(joiningPlayer)) {
             return;
         }
+
+        syncedAdvancements.clear(); // 重置同步状态
 
         for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
             if (!onlinePlayer.equals(joiningPlayer) && !isLocalhost(onlinePlayer)) {
